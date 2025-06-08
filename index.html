@@ -1,3 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tebak Angka</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Font yang lebih modern */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%); /* Latar belakang gradien */
+            margin: 0;
+            color: #333;
+            text-align: center;
+            padding: 20px; /* Padding keseluruhan untuk menghindari konten terlalu mepet ke tepi */
+            box-sizing: border-box; /* Pastikan padding tidak membuat elemen melebar */
+        }
+
+        .affiliate-banner-container {
+            width: 100%;
+            max-width: 600px; /* Batasi lebar maksimum banner */
+            text-align: center;
+            padding: 10px 0;
+            margin-bottom: 25px; /* Jarak yang sedikit lebih besar */
+        }
+
+        .affiliate-banner {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            border-radius: 8px; /* Sudut sedikit membulat untuk banner */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Bayangan lebih jelas */
+            transition: transform 0.2s ease-in-out; /* Efek hover */
+        }
+
+        .affiliate-banner:hover {
+            transform: scale(1.02); /* Sedikit membesar saat di-hover */
+        }
+
+        .game-container {
+            background-color: #ffffff;
+            padding: 35px; /* Padding lebih besar */
+            border-radius: 15px; /* Sudut lebih membulat */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); /* Bayangan lebih menonjol */
+            width: 90%; /* Tetap fleksibel */
+            max-width: 450px; /* Batasi lebar maksimum game container */
+            border: 1px solid #e0e0e0; /* Border halus */
+            box-sizing: border-box; /* Pastikan padding tidak membuat elemen melebar */
+        }
+
+        h1 {
+            color: #333; /* Warna gelap agar kontras dengan latar */
+            margin-bottom: 25px;
+            font-size: 2em; /* Ukuran font lebih besar */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            line-height: 1.5; /* Jarak antar baris */
+            color: #555;
+        }
+
+        input[type="number"] {
+            width: calc(100% - 24px); /* Sesuaikan perhitungan untuk padding dan border */
+            padding: 12px; /* Padding lebih besar */
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px; /* Sudut membulat */
+            font-size: 1.1em;
+            text-align: center;
+            box-sizing: border-box; /* Pastikan padding tidak membuat input melebar */
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px; /* Padding lebih besar */
+            border: none;
+            border-radius: 8px; /* Sudut membulat */
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px); /* Efek sedikit naik saat di-hover */
+        }
+
+        button:active {
+            transform: translateY(0); /* Efek saat diklik */
         }
 
         #message {
@@ -10,6 +110,13 @@
 
         .correct {
             color: #28a745 !important; /* Hijau yang lebih cerah */
+        }
+
+        #winCount { /* Gaya untuk tampilan jumlah kemenangan */
+            font-size: 1.1em;
+            margin-top: 15px;
+            color: #0056b3; /* Warna biru agar menonjol */
+            font-weight: bold;
         }
 
         /* Media Queries untuk responsivitas yang lebih baik pada layar kecil */
@@ -43,15 +150,49 @@
         <input type="number" id="guessInput" placeholder="Masukkan tebakan Anda">
         <button onclick="checkGuess()">Tebak</button>
         <p id="message"></p>
-        <button onclick="resetGame()" style="display: none; margin-top: 10px;">Main Lagi</button>
+        <p id="winCount">Total Kemenangan: 0</p> <button onclick="resetGame()" style="display: none; margin-top: 10px;">Main Lagi</button>
     </div>
 
     <script>
         let randomNumber;
         let attempts;
+        let totalWins = 0; // Variabel baru untuk menyimpan jumlah kemenangan
+        const localStorageKey = 'number_guessing_game_wins'; // Kunci untuk Local Storage
+
         const guessInput = document.getElementById('guessInput');
         const messageDisplay = document.getElementById('message');
         const resetButton = document.querySelector('button[onclick="resetGame()"]');
+        const winCountDisplay = document.getElementById('winCount'); // Dapatkan elemen untuk menampilkan kemenangan
+
+        // Fungsi untuk memuat jumlah kemenangan dari Local Storage
+        function loadWins() {
+            try {
+                const storedWins = localStorage.getItem(localStorageKey);
+                if (storedWins) {
+                    totalWins = parseInt(storedWins);
+                } else {
+                    totalWins = 0; // Jika belum ada, mulai dari 0
+                }
+            } catch (e) {
+                console.error("Error reading from Local Storage:", e);
+                totalWins = 0; // Pastikan default 0 jika ada error
+            }
+            updateWinCountDisplay(); // Perbarui tampilan setelah memuat
+        }
+
+        // Fungsi untuk menyimpan jumlah kemenangan ke Local Storage
+        function saveWins() {
+            try {
+                localStorage.setItem(localStorageKey, totalWins.toString());
+            } catch (e) {
+                console.error("Error writing to Local Storage:", e);
+            }
+        }
+
+        // Fungsi untuk memperbarui tampilan jumlah kemenangan
+        function updateWinCountDisplay() {
+            winCountDisplay.textContent = `Total Kemenangan: ${totalWins}`;
+        }
 
         function initializeGame() {
             randomNumber = Math.floor(Math.random() * 100) + 1;
@@ -61,6 +202,7 @@
             guessInput.disabled = false;
             resetButton.style.display = 'none';
             messageDisplay.classList.remove('correct');
+            loadWins(); // Muat jumlah kemenangan saat game diinisialisasi
         }
 
         function checkGuess() {
@@ -79,6 +221,10 @@
                 messageDisplay.classList.add('correct');
                 guessInput.disabled = true;
                 resetButton.style.display = 'block';
+                
+                totalWins++; // Tambah jumlah kemenangan
+                saveWins(); // Simpan jumlah kemenangan yang baru
+                updateWinCountDisplay(); // Perbarui tampilan jumlah kemenangan
             } else if (userGuess < randomNumber) {
                 messageDisplay.textContent = 'Terlalu rendah! Coba lagi.';
                 messageDisplay.style.color = '#f0ad4e';
